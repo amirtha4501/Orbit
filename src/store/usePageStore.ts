@@ -34,16 +34,19 @@ export const usePageStore = create<PageStore>((set) => ({
       title: 'Ideas',
     },
   ],
-  addPage: (title) =>
+  addPage: (title: string) => {
+    const id = uuidv4();
     set((state) => ({
       pages: [
         ...state.pages,
         {
-          id: uuidv4(),
+          id,
           title,
         },
       ],
-    })),
+    }));
+    return id;
+  },
   updatePageTitle: (id, newTitle) =>
     set((state) => ({
       pages: state.pages.map((page) =>
@@ -57,33 +60,31 @@ export const usePageStore = create<PageStore>((set) => ({
           }
       ),
     })),
-  addSubPage: (parentId: string, title: string) =>
-    set((state) => {
-      const newPage: Page = {
-        id: uuidv4(),
-        title,
-      };
+  addSubPage: (parentId: string, title: string) => {
+    const id = uuidv4();
+    const newPage: Page = { id, title };
 
-      const recursiveAdd = (pages: Page[]): Page[] =>
-        pages.map((page) => {
-          if (page.id === parentId) {
-            return {
-              ...page,
-              children: [...(page.children || []), newPage],
-            };
-          }
-          if (page.children) {
-            return {
-              ...page,
-              children: recursiveAdd(page.children),
-            };
-          }
-          return page;
-        });
+    const recursiveAdd = (pages: Page[]): Page[] =>
+      pages.map((page) => {
+        if (page.id === parentId) {
+          return {
+            ...page,
+            children: [...(page.children || []), newPage],
+          };
+        }
+        if (page.children) {
+          return {
+            ...page,
+            children: recursiveAdd(page.children),
+          };
+        }
+        return page;
+      });
 
-      return {
-        pages: recursiveAdd(state.pages),
-      };
-    }),
+    set((state) => ({
+      pages: recursiveAdd(state.pages),
+    }));
 
+    return id;
+  },
 }));
